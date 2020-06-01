@@ -74,8 +74,7 @@ def zeros(shape, dtype=float):  # pylint: disable=redefined-outer-name
   Returns:
     An ndarray.
   """
-  if dtype:
-    dtype = utils.result_type(dtype)
+  dtype = utils.result_type(dtype) if dtype else dtypes.default_float_type()
   if isinstance(shape, arrays_lib.ndarray):
     shape = shape.data
   return arrays_lib.tensor_to_ndarray(tf.zeros(shape, dtype=dtype))
@@ -357,28 +356,6 @@ def arange(start, stop=None, step=1, dtype=None):
   # is integer type.
   return arrays_lib.tensor_to_ndarray(
       tf.cast(tf.range(start, limit=stop, delta=step), dtype=dtype))
-
-
-@utils.np_doc(np.geomspace)
-def geomspace(start, stop, num=50, endpoint=True, dtype=float):  # pylint: disable=missing-docstring
-  if dtype:
-    dtype = utils.result_type(dtype)
-  if num < 0:
-    raise ValueError('Number of samples {} must be non-negative.'.format(num))
-  if not num:
-    return empty([0])
-  step = 1.
-  if endpoint:
-    if num > 1:
-      step = tf.pow((stop / start), 1 / (num - 1))
-  else:
-    step = tf.pow((stop / start), 1 / num)
-  result = tf.cast(tf.range(num), step.dtype)
-  result = tf.pow(step, result)
-  result = tf.multiply(result, start)
-  if dtype:
-    result = tf.cast(result, dtype=dtype)
-  return arrays_lib.tensor_to_ndarray(result)
 
 
 # Building matrices.
@@ -1525,3 +1502,28 @@ def ix_(*args):  # pylint: disable=missing-docstring
           'Only integer and bool dtypes are supported, got {}'.format(dtype))
 
   return output
+
+
+@utils.np_doc(np.broadcast_arrays)
+def broadcast_arrays(*args, **kwargs):  # pylint: disable=missing-docstring
+  subok = kwargs.pop('subok', False)
+  if subok:
+    raise ValueError('subok=True is not supported.')
+  if kwargs:
+    raise ValueError('Received unsupported arguments {}'.format(kwargs.keys()))
+
+  args = [asarray(arg).data for arg in args]
+  args = utils.tf_broadcast(*args)
+  return [utils.tensor_to_ndarray(arg) for arg in args]
+
+
+@utils.np_doc_only(np.sign)
+def sign(x, out=None, where=None, **kwargs):  # pylint: disable=missing-docstring,redefined-outer-name
+  if out:
+    raise ValueError('tf.numpy doesnt support setting out.')
+  if where:
+    raise ValueError('tf.numpy doesnt support setting where.')
+  if kwargs:
+    raise ValueError('tf.numpy doesnt support setting {}'.format(kwargs.keys()))
+
+  return utils.tensor_to_ndarray(tf.math.sign(asarray(x).data))

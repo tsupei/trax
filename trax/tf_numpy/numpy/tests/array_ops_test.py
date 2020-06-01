@@ -382,23 +382,6 @@ class ArrayCreationTest(tf.test.TestCase):
                     np.arange(start, stop, step, dtype=dtype),
                     msg=msg)
 
-  def testGeomSpace(self):
-
-    def run_test(start, stop, **kwargs):
-      arg1 = start
-      arg2 = stop
-      self.match(
-          array_ops.geomspace(arg1, arg2, **kwargs),
-          np.geomspace(arg1, arg2, **kwargs),
-          msg='geomspace({}, {})'.format(arg1, arg2),
-          almost=True,
-          decimal=4)
-
-    run_test(1, 1000, num=5)
-    run_test(1, 1000, num=5, endpoint=False)
-    run_test(-1, -1000, num=5)
-    run_test(-1, -1000, num=5, endpoint=False)
-
   def testDiag(self):
     array_transforms = [
         lambda x: x,  # Identity,
