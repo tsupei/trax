@@ -26,7 +26,7 @@ import tensorflow.compat.v2 as tf
 from trax.tf_numpy.numpy import dtypes
 
 
-def convert_to_tensor(value, dtype=None):
+def convert_to_tensor(value, dtype=None, dtype_hint=None):
   # A safer version of `tf.convert_to_tensor` to work around b/149876037.
   # TODO(wangpeng): Remove this function once the bug is fixed.
   if (dtype is None and isinstance(value, six.integer_types)
@@ -34,7 +34,7 @@ def convert_to_tensor(value, dtype=None):
     dtype = tf.uint64
   elif (dtype is None and isinstance(value, float)):
     dtype = dtypes.default_float_type()
-  return tf.convert_to_tensor(value, dtype=dtype)
+  return tf.convert_to_tensor(value, dtype=dtype, dtype_hint=dtype_hint)
 
 
 class ndarray(object):  # pylint: disable=invalid-name

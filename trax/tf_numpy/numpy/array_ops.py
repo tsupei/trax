@@ -284,7 +284,7 @@ def array(val, dtype=None, copy=True, ndmin=0):  # pylint: disable=redefined-out
 
     # Handles lists of ndarrays
     result_t = tf.nest.map_structure(maybe_data, result_t)
-    result_t = arrays_lib.convert_to_tensor(result_t)
+    result_t = arrays_lib.convert_to_tensor(result_t, dtype_hint=dtype)
     result_t = tf.cast(result_t, dtype=dtype)
   elif dtype:
     result_t = tf.cast(result_t, dtype)

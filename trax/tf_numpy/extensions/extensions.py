@@ -249,7 +249,7 @@ def jit(f, static_argnums=(), xla_forced_compile=False, input_signature=None,
   return _f
 
 
-def eval_on_shapes(f):
+def eval_on_shapes(f, static_argnums=()):
   """Returns a function that evaluates `f` given input shapes and dtypes.
 
   It transforms function `f` to a function that performs the same computation as
@@ -257,6 +257,7 @@ def eval_on_shapes(f):
 
   Args:
     f: the function to be transformed.
+    static_argnums: See documentation of `jit`.
 
   Returns:
     A function whose input arguments can be either the same as `f`'s or only
@@ -266,7 +267,7 @@ def eval_on_shapes(f):
   # TODO(wangpeng): tf.function could add a knob to turn off materializing the
   #   graph, so that we don't waste computation and memory when we just want
   #   shape inference.
-  tf_f = jit(f).tf_function
+  tf_f = jit(f, static_argnums=static_argnums).tf_function
   # pylint: disable=missing-docstring
   def f_return(*args):
     def abstractify(x):
@@ -280,8 +281,13 @@ def eval_on_shapes(f):
         return tf.TensorSpec(x.shape, x.dtype)
       else:
         return x
-    res = tf_f.get_concrete_function(
-        *tf.nest.map_structure(abstractify, args)).structured_outputs
+    new_args = []
+    for i, arg in enumerate(args):
+      if i in static_argnums:
+        new_args.append(arg)
+      else:
+        new_args.append(tf.nest.map_structure(abstractify, arg))
+    res = tf_f.get_concrete_function(*new_args).structured_outputs
     return tf.nest.map_structure(to_tensor_spec, res)
   # Provides access to `tf_f` for testing purpose.
   f_return._tf_function = tf_f  # pylint: disable=protected-access
